@@ -6,6 +6,7 @@ import sounddevice
 import time
 from matplotlib import pyplot
 
+
 def smooth(x, window_len=11, window='hanning'):
     if x.ndim != 1:
         raise ValueError("smooth only accepts 1 dimension arrays.")
@@ -81,49 +82,59 @@ def get_envelopes(recording, window):
     filtered[:, 1] = data1
     return filtered
 
+
 def average_iid(envelopes, left_channel, right_channel):
     left = envelopes[:, left_channel]
     right = envelopes[:, right_channel]
-    iid = np.mean(left - right)
-    direction = 'LEFT'
-    if iid < 0: direction = 'RIGHT'
-    return iid, direction
 
+    ratio = left / right
+    db = 20 * np.log10(ratio)
+    iid = np.mean(db)
+
+    if iid > 0: direction = 'LEFT'
+    if iid < 0: direction = 'RIGHT'
+    return iid, db, direction
+
+
+def handle_audio(do_plot=False):
+    left_channel = 1
+    right_channel = 0
+
+    sound = record_binaural(0.1)
+    sound = filter(sound, 200, 8000)
+    envelopes = get_envelopes(sound, 200)
+    iid, db, direction = average_iid(envelopes, left_channel, right_channel)
+
+    if do_plot:
+        pyplot.figure()
+        pyplot.subplot(2,1,1)
+        pyplot.plot(sound[:, left_channel], alpha=0.5, color='green')
+        pyplot.plot(envelopes[:, left_channel], alpha=1, color='green')
+        pyplot.plot(sound[:, right_channel], alpha=0.5, color='red')
+        pyplot.plot(envelopes[:, right_channel], alpha=1, color='red')
+        pyplot.legend(['left', 'left e', 'right', 'right e'])
+
+        pyplot.subplot(2,1,2)
+        max = np.max(np.abs(db))
+        pyplot.plot(db)
+        pyplot.ylim([- max, max])
+
+        pyplot.show()
+
+    return iid, db, direction
 
 # Test audio
 #  Andrea SuperBeam USB Headset: Audio (hw:1,0), ALSA (2 in, 2 out)
 if __name__ == "__main__":
-    left_channel = 1
-    right_channel = 0
+
     devices = sounddevice.query_devices()
     sounddevice.default.device = 6
 
     print(devices)
 
-    sound = record_binaural(0.1)
-    sound = filter(sound, 200, 8000)
-    envelopes = get_envelopes(sound, 200)
-    iid = average_iid(envelopes, left_channel, right_channel)
-
-    pyplot.plot(sound[:,left_channel], alpha=0.5, color='green')
-    pyplot.plot(envelopes[:, left_channel], alpha=1, color='green')
-
-    pyplot.plot(sound[:,right_channel], alpha=0.5, color='red')
-    pyplot.plot(envelopes[:, right_channel], alpha=1, color='red')
-
-    pyplot.legend(['left', 'left e', 'right', 'right e'])
-
-    pyplot.figure()
-    ratio = envelopes[:, left_channel] / envelopes[:, right_channel]
-    db = 20 * np.log10(ratio)
-
-    max = np.max(np.abs(db))
-    pyplot.plot(db)
-    pyplot.ylim([- max, max])
-
-    pyplot.show()
-    print(iid)
-
+    while True:
+        iid, db, direction = handle_audio(False)
+        print(iid, direction)
 
 # if __name__ == "__main__":
 #     left_channel = 1

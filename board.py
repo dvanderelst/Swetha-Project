@@ -75,8 +75,6 @@ class Board(device.BoardDevice):
         new = target
         if not raw:
             new = numpy.interp(target, [0, 0.5, 1], [self.min_servo, self.center_servo + self.offset_servo, self.max_servo])
-            print(new)
-
         self.device.set_target(nr, int(new))
 
     def set_led(self, nr, value):

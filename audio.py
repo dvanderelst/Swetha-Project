@@ -126,7 +126,6 @@ def handle_audio(do_plot=False):
 # Test audio
 #  Andrea SuperBeam USB Headset: Audio (hw:1,0), ALSA (2 in, 2 out)
 if __name__ == "__main__":
-
     devices = sounddevice.query_devices()
     sounddevice.default.device = 6
 

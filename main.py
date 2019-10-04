@@ -19,7 +19,7 @@ b.set_servo2(0.5)
 # Set up interpolation, from angles to servo position
 servo_position = interp1d([-90, 0, 95], [0, 0.5, 1], fill_value= (0, 1), bounds_error=False)
 
-c = controller.Controller(1,0)
+c = controller.Controller(5,0)
 
 # Test servo
 #angles = [-80, -60, -45, 0, 45, 60 , 80]
@@ -31,11 +31,14 @@ c = controller.Controller(1,0)
 current_angle = 0
 
 measurements =[]
+print('callibration:', end='')
 for x in range(50):
+    print('.', end='')
     iid, db, direction = audio.handle_audio()
     measurements.append(iid)
     a = numpy.array(measurements)
     bias = numpy.median(a)
+print('Done')
 
 for x in range(500):
     iid, db, direction = audio.handle_audio()

@@ -99,12 +99,10 @@ def average_iid(envelopes, left_channel, right_channel):
 def handle_audio(do_plot=False):
     left_channel = 1
     right_channel = 0
-
     sound = record_binaural(0.1)
-    sound = filter(sound, 200, 8000)
+    sound = filter(sound, 5000, 8000)
     envelopes = get_envelopes(sound, 200)
     iid, db, direction = average_iid(envelopes, left_channel, right_channel)
-
     if do_plot:
         pyplot.figure()
         pyplot.subplot(2,1,1)
@@ -113,12 +111,10 @@ def handle_audio(do_plot=False):
         pyplot.plot(sound[:, right_channel], alpha=0.5, color='red')
         pyplot.plot(envelopes[:, right_channel], alpha=1, color='red')
         pyplot.legend(['left', 'left e', 'right', 'right e'])
-
         pyplot.subplot(2,1,2)
         max = np.max(np.abs(db))
         pyplot.plot(db)
         pyplot.ylim([- max, max])
-
         pyplot.show()
 
     return iid, db, direction
@@ -128,29 +124,7 @@ def handle_audio(do_plot=False):
 if __name__ == "__main__":
     devices = sounddevice.query_devices()
     sounddevice.default.device = 6
-
     print(devices)
-
     while True:
         iid, db, direction = handle_audio(False)
         print(iid, direction)
-
-# if __name__ == "__main__":
-#     left_channel = 1
-#     right_channel = 0
-#     devices = sounddevice.query_devices()
-#     sounddevice.default.device = 6
-#     while True:
-#         start = time.time()
-#         sound = record_binaural(0.1)
-#         sound = filter(sound, 100, 1000)
-#         envelopes = get_envelopes(sound, 200)
-#         iid, direction = average_iid(envelopes, left_channel, right_channel)
-#         iid = iid * 1000
-#         end = time.time()
-#         duration = end - start
-#
-#         x = '%+2.2f %+2.2f ' % (iid, duration)
-#         x = x + direction
-#
-#         print(x)

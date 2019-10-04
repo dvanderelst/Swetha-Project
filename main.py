@@ -1,3 +1,4 @@
+from matplotlib import pyplot
 from scipy.interpolate import interp1d
 import sounddevice
 import board
@@ -19,15 +20,8 @@ b.set_servo2(0.5)
 # Set up interpolation, from angles to servo position
 servo_position = interp1d([-90, 0, 95], [0, 0.5, 1], fill_value= (0, 1), bounds_error=False)
 
-c = controller.Controller(5,0)
+c = controller.Controller(1,0)
 
-# Test servo
-#angles = [-80, -60, -45, 0, 45, 60 , 80]
-#for angle in angles:
-#    position = servo_position(angle)
-#    b.set_servo2(position)
-#    print(angle, 'degrees')
-#    time.sleep(3)
 current_angle = 0
 
 measurements =[]
@@ -36,21 +30,25 @@ for x in range(50):
     print('.', end='')
     iid, db, direction = audio.handle_audio()
     measurements.append(iid)
-    a = numpy.array(measurements)
-    bias = numpy.median(a)
+measurements = numpy.array(measurements)
+bias = numpy.mean(measurements)
 print('Done')
-
+hist = pyplot.hist(measurements)
+pyplot.vlines(bias, 0, numpy.max(hist[0]),'red', linewidth=3)
+pyplot.show()
+#%%
 for x in range(500):
     iid, db, direction = audio.handle_audio()
+
     corrected_iid = iid - bias
-    if abs(corrected_iid) < 1: corrected_iid = 0
+    #if abs(corrected_iid) < 1: corrected_iid = 0
     output = c.get_output(corrected_iid, 0.1)
-    print(iid, direction, output)
     current_angle = current_angle - output
-    if current_angle < -80: current_angle = -85
-    if current_angle > +80: current_angle = +85
-    print(current_angle)
+    if current_angle < -85: current_angle = -85
+    if current_angle > +85: current_angle = +85
+
+    msg = '%+.2f   %+.2f   %.2f   t%s' % (iid, current_angle, -output, direction)
+    print(msg)
 
     new_servo_position = servo_position(current_angle)
     b.set_servo2(new_servo_position)
-    print('------------------------------------------------')

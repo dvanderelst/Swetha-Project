@@ -6,8 +6,14 @@ import controller
 import audio
 import numpy
 
+# Top servo should be plugged into servo01
+# Bottom servo should be plugged into servo02
+# plug microphones into andrea sound card, use the mic symbol channel
+
 devices = sounddevice.query_devices()
-sounddevice.default.device = 6
+
+# Select Andrea SuperBeam
+sounddevice.default.device = 8
 
 b = board.Board(verbose=True)
 
@@ -25,7 +31,8 @@ c = controller.Controller(1,0)
 current_angle = 0
 
 measurements =[]
-print('callibration:', end='')
+print('Please be quiet for the calibration')
+print('calibration:', end='')
 for x in range(50):
     print('.', end='')
     iid, db, direction = audio.handle_audio()
@@ -39,16 +46,13 @@ pyplot.show()
 #%%
 for x in range(500):
     iid, db, direction = audio.handle_audio()
-
     corrected_iid = iid - bias
     #if abs(corrected_iid) < 1: corrected_iid = 0
     output = c.get_output(corrected_iid, 0.1)
     current_angle = current_angle - output
     if current_angle < -85: current_angle = -85
     if current_angle > +85: current_angle = +85
-
-    msg = '%+.2f   %+.2f   %.2f   t%s' % (iid, current_angle, -output, direction)
+    msg = '%+.2f   %+.2f   %.2f   %s' % (iid, current_angle, -output, direction)
     print(msg)
-
     new_servo_position = servo_position(current_angle)
     b.set_servo2(new_servo_position)
